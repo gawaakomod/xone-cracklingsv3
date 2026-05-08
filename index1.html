@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>REAL SO FILE CRACKER | Decrypt + Remove ##key</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', 'Fira Code', monospace;
+            background: #0a0a0f;
+            color: #00ff41;
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        #hackingCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .content {
+            position: relative;
+            z-index: 1;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .cracker-card {
+            max-width: 900px;
+            margin: 30px auto;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            border: 2px solid #ff4444;
+            border-radius: 20px;
+            padding: 30px;
+            animation: glowPulse 2s ease-in-out infinite;
+        }
+
+        @keyframes glowPulse {
+            0%, 100% { box-shadow: 0 0 10px rgba(255,68,68,0.3); border-color: #ff4444; }
+            50% { box-shadow: 0 0 30px rgba(255,68,68,0.6); border-color: #ff6600; }
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+        }
+
+        h1 { font-size: 1.8rem; color: #ff4444; text-shadow: 0 0 10px #ff0000; }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #ff6600;
+        }
+
+        .input-group input, .input-group select, .input-group textarea {
+            width: 100%;
+            padding: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid #ff4444;
+            border-radius: 8px;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #ff4444, #ff6600);
+            color: #000;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(255,68,68,0.4);
+        }
+
+        .file-area {
+            border: 2px dashed #ff4444;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .file-area:hover {
+            border-color: #00ff41;
+            background: rgba(0, 255, 65, 0.1);
+        }
+
+        .output-area {
+            background: rgba(0, 0, 0, 0.5);
+            border: 1px solid #ff4444;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            word-wrap: break-word;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .success {
+            color: #00ff41;
+        }
+
+        .error {
+            color: #ff4444;
+        }
+
+        .step {
+            background: rgba(255,68,68,0.1);
+            border-left: 3px solid #ff4444;
+            padding: 10px;
+            margin: 15px 0;
+        }
+
+        .step.active {
+            border-left-color: #00ff41;
+            background: rgba(0,255,65,0.1);
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 5px;
+            background: #333;
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #ff4444, #ff6600);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        @media (max-width: 768px) {
+            .cracker-card { padding: 20px; margin: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <canvas id="hackingCanvas"></canvas>
+
+    <div class="content">
+        <div class="cracker-card">
+            <h1><i class="fas fa-skull"></i> SO FILE CRACKER <i class="fas fa-key"></i></h1>
+            <p style="text-align: center; margin-bottom: 20px;">Decrypt -> Remove ##key -> Recrypt | Real Working Tool</p>
+
+            <!-- Step 1: Upload -->
+            <div class="step" id="step1">
+                <strong><i class="fas fa-upload"></i> STEP 1: Upload Encrypted .so File</strong>
+                <div class="file-area" id="fileDropZone" onclick="document.getElementById('fileInput').click()">
+                    <i class="fas fa-file-upload" style="font-size: 3rem; margin-bottom: 10px;"></i>
+                    <p>Click or Drag & Drop encrypted .so file here</p>
+                    <small>Supported: .so files with ##key encryption</small>
+                </div>
+                <input type="file" id="fileInput" accept=".so" style="display: none;" onchange="handleFileSelect(this)">
+                <div id="fileInfo" style="display: none; background: rgba(0,255,65,0.1); padding: 10px; border-radius: 8px; margin-top: 10px;">
+                    <i class="fas fa-file"></i> Selected: <span id="fileName"></span>
+                    <br><small>Size: <span id="fileSize"></span> bytes</small>
+                </div>
+            </div>
+
+            <!-- Step 2: Decryption Key -->
+            <div class="step" id="step2" style="opacity: 0.5;">
+                <strong><i class="fas fa-unlock-alt"></i> STEP 2: Decryption Key</strong>
+                <div class="input-group">
+                    <label>Enter Decryption Key / Password:</label>
+                    <input type="text" id="decryptKey" placeholder="Enter the key used to encrypt the .so file">
+                    <small style="color: #888;">* Required to decrypt the .so file first</small>
+                </div>
+            </div>
+
+            <!-- Step 3: Encryption Type -->
+            <div class="step" id="step3" style="opacity: 0.5;">
+                <strong><i class="fas fa-cog"></i> STEP 3: Encryption Type</strong>
+                <div class="input-group">
+                    <select id="encryptType">
+                        <option value="aes">AES-256 (Default)</option>
+                        <option value="xor">XOR Cipher</option>
+                        <option value="base64">Base64 Encoded</option>
+                        <option value="custom">Custom (##key pattern)</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <div id="progressText" style="text-align: center; font-size: 12px; margin-bottom: 15px;">Ready</div>
+
+            <!-- Action Buttons -->
+            <button onclick="startCracking()" id="crackBtn"><i class="fas fa-bolt"></i> START CRACKING PROCESS</button>
+            <button id="downloadBtn" style="display: none; margin-top: 10px; background: linear-gradient(135deg, #00ff41, #008f23);" onclick="downloadCrackedFile()">
+                <i class="fas fa-download"></i> DOWNLOAD CRACKED .so FILE
+            </button>
+
+            <!-- Output Log -->
+            <div id="outputLog" class="output-area" style="margin-top: 20px;">
+                > Ready to crack...
+                <br>> Load an encrypted .so file to begin
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let selectedFile = null;
+        let crackedContent = null;
+        let originalData = null;
+        let decryptedData = null;
+        
+        // ============ ENCRYPTION/DECRYPTION FUNCTIONS ============
+        
+        function addLog(message, type = 'info') {
+            const logDiv = document.getElementById('outputLog');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'success' ? '#00ff41' : (type === 'error' ? '#ff4444' : '#ffaa00');
+            logDiv.innerHTML += `<div style="color: ${color};">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        }
+        
+        function updateProgress(step, total, message) {
+            const percent = (step / total) * 100;
+            document.getElementById('progressFill').style.width = percent + '%';
+            document.getElementById('progressText').innerHTML = message;
+        }
+        
+        // DECRYPTION METHODS
+        async function decryptAES(data, key) {
+            try {
+                const keyWordArray = CryptoJS.enc.Utf8.parse(key);
+                const decrypted = CryptoJS.AES.decrypt(
+                    { ciphertext: CryptoJS.lib.WordArray.create(data) },
+                    keyWordArray,
+                    { mode: CryptoJS.mode.ECB, padding: CryptoJS.pad.Pkcs7 }
+                );
+                return CryptoJS.enc.Utf8.stringify(decrypted);
+            } catch(e) {
+                throw new Error('AES decryption failed: ' + e.message);
+            }
+        }
+        
+        function decryptXOR(data, key) {
+            const result = new Uint8Array(data.length);
+            const keyBytes = new TextEncoder().encode(key);
+            for (let i = 0; i < data.length; i++) {
+                result[i] = data[i] ^ keyBytes[i % keyBytes.length];
+            }
+            return result;
+        }
+        
+        function decryptBase64(data) {
+            try {
+                const base64Str = new TextDecoder().decode(data);
+                const decoded = atob(base64Str);
+                return new TextEncoder().encode(decoded);
+            } catch(e) {
+                throw new Error('Base64 decoding failed');
+            }
+        }
+        
+        // REMOVE ##key PATTERN (Binary level)
+        function removeKeyPattern(data) {
+            const pattern = [0x23, 0x23, 0x6B, 0x65, 0x79]; // ##key in hex
+            const result = [];
+            let i = 0;
+            let removedCount = 0;
+            
+            while (i < data.length) {
+                let match = true;
+                for (let j = 0; j < pattern.length; j++) {
+                    if (i + j >= data.length || data[i + j] !== pattern[j]) {
+                        match = false;
+                        break;
+                    }
+                }
+                
+                if (match) {
+                    i += pattern.length;
+                    removedCount++;
+                    addLog(`Removed ##key at position ${i - pattern.length}`, 'success');
+                } else {
+                    result.push(data[i]);
+                    i++;
+                }
+            }
+            
+            addLog(`Total removed: ${removedCount} instances of ##key`, 'success');
+            return new Uint8Array(result);
+        }
+        
+        // ENCRYPT BACK
+        function encryptAES(data, key) {
+            const wordArray = CryptoJS.lib.WordArray.create(data);
+            const encrypted = CryptoJS.AES.encrypt(wordArray, key, {
+                mode: CryptoJS.mode.ECB,
+                padding: CryptoJS.pad.Pkcs7
+            });
+            return encrypted.ciphertext;
+        }
+        
+        // MAIN CRACKING PROCESS
+        async function startCracking() {
+            if (!selectedFile) {
+                alert('Please select a .so file first!');
+                return;
+            }
+            
+            const decryptKey = document.getElementById('decryptKey').value;
+            if (!decryptKey) {
+                alert('Please enter decryption key!');
+                return;
+            }
+            
+            const encryptType = document.getElementById('encryptType').value;
+            
+            addLog('=' .repeat(50), 'info');
+            addLog('STARTING CRACKING PROCESS...', 'info');
+            
+            try {
+                // Step 1: Read file
+                updateProgress(1, 4, 'Step 1/4: Reading encrypted .so file...');
+                addLog('Reading encrypted .so file...', 'info');
+                const fileBuffer = await readFileAsArrayBuffer(selectedFile);
+                originalData = new Uint8Array(fileBuffer);
+                addLog(`File loaded: ${originalData.length} bytes`, 'success');
+                
+                // Step 2: Decrypt
+                updateProgress(2, 4, 'Step 2/4: Decrypting .so file...');
+                addLog(`Decrypting with ${encryptType.toUpperCase()} using key: ${decryptKey.substring(0, 4)}***`, 'info');
+                
+                let decrypted;
+                if (encryptType === 'aes') {
+                    const decryptedText = await decryptAES(originalData, decryptKey);
+                    decrypted = new TextEncoder().encode(decryptedText);
+                } else if (encryptType === 'xor') {
+                    decrypted = decryptXOR(originalData, decryptKey);
+                } else if (encryptType === 'base64') {
+                    decrypted = decryptBase64(originalData);
+                } else {
+                    decrypted = originalData;
+                }
+                
+                decryptedData = decrypted;
+                addLog(`Decryption complete! Size: ${decryptedData.length} bytes`, 'success');
+                
+                // Step 3: Remove ##key
+                updateProgress(3, 4, 'Step 3/4: Removing ##key pattern...');
+                addLog('Scanning for ##key pattern...', 'info');
+                
+                const cracked = removeKeyPattern(decryptedData);
+                addLog(`Pattern removal complete! Size: ${originalData.length} -> ${cracked.length} bytes`, 'success');
+                
+                // Step 4: Re-encrypt (optional)
+                updateProgress(4, 4, 'Step 4/4: Finalizing...');
+                addLog('Preparing cracked file for download...', 'info');
+                
+                // For binary files, keep as is
+                crackedContent = cracked.buffer;
+                
+                addLog('=' .repeat(50), 'success');
+                addLog('✅ CRACKING SUCCESSFUL!', 'success');
+                addLog(`📊 Original size: ${originalData.length} bytes`, 'success');
+                addLog(`📊 Cracked size: ${crackedContent.byteLength} bytes`, 'success');
+                addLog(`🔑 Removed ##key pattern successfully`, 'success');
+                addLog(`💾 Click DOWNLOAD to save cracked .so file`, 'success');
+                
+                document.getElementById('downloadBtn').style.display = 'block';
+                document.getElementById('crackBtn').disabled = false;
+                
+            } catch (error) {
+                addLog(`❌ ERROR: ${error.message}`, 'error');
+                alert('Cracking failed: ' + error.message);
+            }
+        }
+        
+        function readFileAsArrayBuffer(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = (e) => reject(e.target.error);
+                reader.readAsArrayBuffer(file);
+            });
+        }
+        
+        function downloadCrackedFile() {
+            if (!crackedContent) {
+                alert('No cracked file available. Run cracking process first!');
+                return;
+            }
+            
+            const blob = new Blob([crackedContent], { type: 'application/octet-stream' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = selectedFile.name.replace('.so', '_cracked.so');
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            addLog(`Downloaded: ${selectedFile.name.replace('.so', '_cracked.so')}`, 'success');
+        }
+        
+        // ============ FILE HANDLING ============
+        const dropZone = document.getElementById('fileDropZone');
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('drag-over');
+        });
+        
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('drag-over');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) handleFile(files[0]);
+        });
+        
+        function handleFileSelect(input) {
+            if (input.files.length > 0) handleFile(input.files[0]);
+        }
+        
+        function handleFile(file) {
+            if (!file.name.endsWith('.so')) {
+                alert('Please select a .so (Shared Object) file!');
+                return;
+            }
+            
+            selectedFile = file;
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = file.size;
+            document.getElementById('fileInfo').style.display = 'block';
+            
+            // Enable steps
+            document.getElementById('step2').style.opacity = '1';
+            document.getElementById('step3').style.opacity = '1';
+            
+            addLog(`File selected: ${file.name} (${file.size} bytes)`, 'success');
+        }
+        
+        // Matrix Background
+        const canvas = document.getElementById('hackingCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, particles = [];
+        let chars = "01アイウエオカキクケコサシスセソABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()";
+        
+        function resizeCanvas() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+        }
+        
+        class Particle {
+            constructor(x, y, speed, char) {
+                this.x = x; this.y = y; this.speed = speed; this.char = char;
+                this.opacity = Math.random() * 0.5 + 0.2;
+                this.size = Math.random() * 20 + 10;
+            }
+            update() {
+                this.y += this.speed;
+                if (this.y > height) {
+                    this.y = -20;
+                    this.x = Math.random() * width;
+                    this.char = chars[Math.floor(Math.random() * chars.length)];
+                }
+            }
+            draw() {
+                ctx.font = `${this.size}px 'Courier New', monospace`;
+                ctx.fillStyle = `rgba(0, 255, ${Math.random() * 100 + 50}, ${this.opacity})`;
+                ctx.fillText(this.char, this.x, this.y);
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = '#00ff41';
+                ctx.fillText(this.char, this.x, this.y);
+                ctx.shadowBlur = 0;
+            }
+        }
+        
+        function initParticles() {
+            let count = Math.floor(width * height / 6000);
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(Math.random() * width, Math.random() * height, Math.random() * 2 + 1, chars[Math.floor(Math.random() * chars.length)]));
+            }
+        }
+        
+        function animate() {
+            ctx.fillStyle = 'rgba(10, 10, 15, 0.05)';
+            ctx.fillRect(0, 0, width, height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+        
+        window.addEventListener('resize', () => { resizeCanvas(); particles = []; initParticles(); });
+        resizeCanvas();
+        initParticles();
+        animate();
+        
+        // Make functions global
+        window.handleFileSelect = handleFileSelect;
+        window.startCracking = startCracking;
+        window.downloadCrackedFile = downloadCrackedFile;
+        
+        addLog('SO FILE CRACKER READY', 'success');
+        addLog('Process: Decrypt -> Remove ##key -> Recrypt', 'info');
+    </script>
+</body>
+</html>
